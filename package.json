@@ -1,0 +1,15 @@
+{
+  "name": "freewrite",
+  "version": "1.0.0",
+  "description": "A distraction-free writing environment that removes the crutch of editing.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^31.0.0"
+  }
+}

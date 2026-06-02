@@ -6,6 +6,14 @@ A distraction-free writing environment that removes the crutch of editing — an
 
 Most writing tools make it too easy to second-guess yourself. Freewrite removes the escape hatch: no backspace, no edits, no pauses. You write forward — always forward — for a fixed amount of time.
 
+## Getting Started
+
+To install dependencies and start the application, run:
+
+```bash
+npm install && npm start
+```
+
 ## Core Experience
 
 - **The Session**: Type until the timer ends. No backspace, no menus, no distractions.

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Freewrite</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="screen">
+        <div class="setup-content">
+            <h1>Freewrite</h1>
+            <div class="input-group">
+                <label for="timer-input">Timer (minutes)</label>
+                <input type="number" id="timer-input" min="2" max="60" value="10">
+            </div>
+            <div class="input-group">
+                <label for="prompt-input">Optional Prompt</label>
+                <input type="text" id="prompt-input" placeholder="What's on your mind?">
+            </div>
+            <div class="input-group">
+                <label for="tags-input">Tags (comma separated)</label>
+                <input type="text" id="tags-input" placeholder="morning, work, personal">
+            </div>
+            <button id="start-btn">Start Session</button>
+        </div>
+    </div>
+
+    <!-- Writing Mode -->
+    <div id="writing-screen" class="screen hidden">
+        <div id="canvas-container">
+            <div id="active-prompt" class="hidden"></div>
+            <textarea id="paper-canvas" placeholder="Type forward — always forward..."></textarea>
+        </div>
+        <div id="timer-display" class="unobtrusive">10:00</div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="end-screen" class="screen hidden">
+        <div class="end-content">
+            <h2>Session Complete</h2>
+            <div id="session-summary">
+                <p>Time written: <span id="summary-time"></span></p>
+                <p>Word count: <span id="summary-words"></span></p>
+            </div>
+            <button id="close-btn">Save & Close</button>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
