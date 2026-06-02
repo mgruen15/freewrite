@@ -42,11 +42,24 @@ class SessionManager {
         this.setupScreen = document.getElementById('setup-screen');
         this.writingScreen = document.getElementById('writing-screen');
         this.endScreen = document.getElementById('end-screen');
+        this.libraryScreen = document.getElementById('library-screen');
+        this.detailScreen = document.getElementById('detail-screen');
+        
+        this.sessionConfig = document.getElementById('session-config');
         
         this.timerInput = document.getElementById('timer-input');
         this.tagsInput = document.getElementById('tags-input');
+        
+        this.libraryBtn = document.getElementById('library-btn');
         this.startBtn = document.getElementById('start-btn');
         this.abortBtn = document.getElementById('abort-btn');
+        this.libraryBackBtn = document.getElementById('library-back-btn');
+        this.detailBackBtn = document.getElementById('detail-back-btn');
+        
+        this.historyList = document.getElementById('history-list');
+        this.detailDate = document.getElementById('detail-date');
+        this.detailStats = document.getElementById('detail-stats');
+        this.detailBody = document.getElementById('detail-body');
         
         this.canvas = document.getElementById('paper-canvas');
         this.timerDisplay = document.getElementById('timer-display');
@@ -62,6 +75,18 @@ class SessionManager {
     }
 
     initEventListeners() {
+        // Navigation
+        this.libraryBtn.addEventListener('click', () => this.showLibrary());
+        this.libraryBackBtn.addEventListener('click', () => {
+            this.libraryScreen.classList.add('hidden');
+            this.setupScreen.classList.remove('hidden');
+        });
+        this.detailBackBtn.addEventListener('click', () => {
+            this.detailScreen.classList.add('hidden');
+            this.libraryScreen.classList.remove('hidden');
+        });
+
+        // Session Actions
         this.startBtn.addEventListener('click', () => this.startSession());
         this.abortBtn.addEventListener('click', () => this.handleAbort());
         this.closeBtn.addEventListener('click', () => this.resetToSetup());
@@ -76,6 +101,57 @@ class SessionManager {
                 this.handleBlockedInput();
             }
         });
+    }
+
+    async showLibrary() {
+        this.setupScreen.classList.add('hidden');
+        this.libraryScreen.classList.remove('hidden');
+        
+        const history = await window.electronAPI.getHistory();
+        this.renderHistory(history);
+    }
+
+    renderHistory(history) {
+        this.historyList.innerHTML = '';
+        
+        if (history.length === 0) {
+            this.historyList.innerHTML = '<p style="text-align: center; color: #999; margin-top: 40px;">No sessions yet.</p>';
+            return;
+        }
+
+        // Sort by timestamp descending
+        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        history.forEach(session => {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            
+            const date = new Date(session.timestamp).toLocaleDateString(undefined, {
+                weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            
+            item.innerHTML = `
+                <div class="item-date">${date}</div>
+                <div class="item-preview">${session.body.substring(0, 100)}...</div>
+                <div class="item-stats">${session.word_count} words • ${session.duration_minutes.actual}m</div>
+            `;
+            
+            item.addEventListener('click', () => this.showDetail(session));
+            this.historyList.appendChild(item);
+        });
+    }
+
+    showDetail(session) {
+        this.libraryScreen.classList.add('hidden');
+        this.detailScreen.classList.remove('hidden');
+        
+        const date = new Date(session.timestamp).toLocaleDateString(undefined, {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        
+        this.detailDate.textContent = date;
+        this.detailStats.textContent = `${session.word_count} words • ${session.duration_minutes.actual}m actual • ${session.duration_minutes.planned}m planned`;
+        this.detailBody.textContent = session.body;
     }
 
     handleAbort() {
@@ -131,9 +207,47 @@ class SessionManager {
         // For now, we'll stick to the CSS feedback
     }
 
-    endSession() {
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    async endSession() {
         const elapsedSeconds = this.timer.getElapsedSeconds();
         this.timer.stop();
+        
+        const body = this.canvas.value;
+        const wordCount = body.trim().split(/\s+/).filter(w => w).length;
+
+        // Create structured session record
+        const sessionRecord = {
+            id: this.generateUUID(),
+            timestamp: new Date().toISOString(),
+            duration_minutes: {
+                planned: this.sessionData.duration,
+                actual: parseFloat((elapsedSeconds / 60).toFixed(2))
+            },
+            word_count: wordCount,
+            tags: this.sessionData.tags,
+            body: body,
+            // AI fields initialized as null/empty
+            themes: [],
+            emotion_signal: null,
+            summary: null,
+            open_questions: [],
+            entities: { people: [], projects: [], places: [] }
+        };
+
+        // Save to local storage
+        try {
+            await window.electronAPI.saveSession(sessionRecord);
+            console.log('Session saved successfully');
+        } catch (error) {
+            console.error('Failed to save session:', error);
+        }
+
         this.writingScreen.classList.add('hidden');
         this.endScreen.classList.remove('hidden');
 
@@ -143,7 +257,6 @@ class SessionManager {
             ? `${minutes}m ${seconds}s` 
             : `${seconds} seconds`;
 
-        const wordCount = this.canvas.value.trim().split(/\s+/).filter(w => w).length;
         this.summaryTime.textContent = timeStr;
         this.summaryWords.textContent = `${wordCount} words`;
     }

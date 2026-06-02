@@ -8,17 +8,56 @@
 <body>
     <!-- Setup Screen -->
     <div id="setup-screen" class="screen">
+        <button id="library-btn" class="icon-btn" title="Library">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        </button>
         <div class="setup-content">
             <h1>Freewrite</h1>
-            <div class="input-group">
-                <label for="timer-input">Timer (minutes)</label>
-                <input type="number" id="timer-input" min="2" max="60" value="10">
+            <div id="session-config">
+                <div class="input-group">
+                    <label for="timer-input">Timer (minutes)</label>
+                    <input type="number" id="timer-input" min="2" max="60" value="10">
+                </div>
+                <div class="input-group">
+                    <label for="tags-input">Tags (comma separated)</label>
+                    <input type="text" id="tags-input" placeholder="morning, work, personal">
+                </div>
+                <button id="start-btn">Start Session</button>
             </div>
-            <div class="input-group">
-                <label for="tags-input">Tags (comma separated)</label>
-                <input type="text" id="tags-input" placeholder="morning, work, personal">
+        </div>
+    </div>
+
+    <!-- Library Screen -->
+    <div id="library-screen" class="screen hidden">
+        <div class="library-content">
+            <header>
+                <button id="library-back-btn" class="nav-back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Back
+                </button>
+                <h2>History</h2>
+                <div class="spacer"></div>
+            </header>
+            <div id="history-list">
+                <!-- Session items will be injected here -->
             </div>
-            <button id="start-btn">Start Session</button>
+        </div>
+    </div>
+
+    <!-- Session Detail View -->
+    <div id="detail-screen" class="screen hidden">
+        <div class="detail-content">
+            <header>
+                <button id="detail-back-btn" class="nav-back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Back
+                </button>
+                <div id="detail-meta">
+                    <span id="detail-date"></span>
+                    <span id="detail-stats"></span>
+                </div>
+            </header>
+            <div id="detail-body"></div>
         </div>
     </div>
 

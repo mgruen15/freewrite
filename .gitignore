@@ -1,5 +1,6 @@
 # Project specific
 project_description.md
+history.json
 
 # Dependencies
 node_modules/

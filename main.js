@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -19,6 +20,45 @@ function createWindow() {
 
   // mainWindow.webContents.openDevTools();
 }
+
+ipcMain.handle('save-session', async (event, sessionData) => {
+  const userDataPath = app.getPath('userData');
+  const userHistoryPath = path.join(userDataPath, 'history.json');
+  const repoHistoryPath = path.join(__dirname, 'history.json');
+  
+  const saveToPath = (historyPath) => {
+    let history = [];
+    if (fs.existsSync(historyPath)) {
+      try {
+        const data = fs.readFileSync(historyPath, 'utf8');
+        history = JSON.parse(data);
+      } catch (e) {
+        console.error(`Failed to parse ${historyPath}`, e);
+      }
+    }
+    history.push(sessionData);
+    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+  };
+
+  saveToPath(userHistoryPath);
+  saveToPath(repoHistoryPath);
+  
+  return { success: true };
+});
+
+ipcMain.handle('get-history', async () => {
+  const repoHistoryPath = path.join(__dirname, 'history.json');
+  if (fs.existsSync(repoHistoryPath)) {
+    try {
+      const data = fs.readFileSync(repoHistoryPath, 'utf8');
+      return JSON.parse(data);
+    } catch (e) {
+      console.error('Failed to read history.json', e);
+      return [];
+    }
+  }
+  return [];
+});
 
 app.whenReady().then(() => {
   createWindow();
