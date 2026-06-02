@@ -48,7 +48,6 @@ class SessionManager {
         this.sessionConfig = document.getElementById('session-config');
         
         this.timerInput = document.getElementById('timer-input');
-        this.tagsInput = document.getElementById('tags-input');
         
         this.libraryBtn = document.getElementById('library-btn');
         this.startBtn = document.getElementById('start-btn');
@@ -155,18 +154,21 @@ class SessionManager {
     }
 
     handleAbort() {
-        if (confirm('Finish session early? Your writing will be preserved.')) {
+        const wordCount = this.canvas.value.trim().split(/\s+/).filter(w => w).length;
+        const message = wordCount > 0 
+            ? 'Finish session early? Your writing will be preserved.' 
+            : 'Abort session? Nothing has been written yet.';
+            
+        if (confirm(message)) {
             this.endSession();
         }
     }
 
     startSession() {
         const duration = parseInt(this.timerInput.value) || 10;
-        const tags = this.tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
 
         this.sessionData = {
             duration,
-            tags,
             startTime: new Date()
         };
 
@@ -221,6 +223,12 @@ class SessionManager {
         const body = this.canvas.value;
         const wordCount = body.trim().split(/\s+/).filter(w => w).length;
 
+        // Don't save empty sessions
+        if (wordCount === 0) {
+            this.resetToSetup();
+            return;
+        }
+
         // Create structured session record
         const sessionRecord = {
             id: this.generateUUID(),
@@ -230,7 +238,7 @@ class SessionManager {
                 actual: parseFloat((elapsedSeconds / 60).toFixed(2))
             },
             word_count: wordCount,
-            tags: this.sessionData.tags,
+            tags: [],
             body: body,
             // AI fields initialized as null/empty
             themes: [],
