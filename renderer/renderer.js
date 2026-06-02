@@ -54,6 +54,7 @@ class SessionManager {
         this.abortBtn = document.getElementById('abort-btn');
         this.libraryBackBtn = document.getElementById('library-back-btn');
         this.detailBackBtn = document.getElementById('detail-back-btn');
+        this.exportBtn = document.getElementById('export-btn');
         
         this.historyList = document.getElementById('history-list');
         this.historySearch = document.getElementById('history-search');
@@ -90,6 +91,9 @@ class SessionManager {
         // Search
         this.historySearch.addEventListener('input', (e) => this.handleSearch(e.target.value));
 
+        // Export
+        this.exportBtn.addEventListener('click', () => this.handleExport());
+
         // Session Actions
         this.startBtn.addEventListener('click', () => this.startSession());
         this.abortBtn.addEventListener('click', () => this.handleAbort());
@@ -105,6 +109,18 @@ class SessionManager {
                 this.handleBlockedInput();
             }
         });
+    }
+
+    async handleExport() {
+        try {
+            const result = await window.electronAPI.exportHistory();
+            if (result.success) {
+                console.log('Export successful');
+            }
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export history.');
+        }
     }
 
     async showLibrary() {

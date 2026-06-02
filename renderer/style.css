@@ -153,6 +153,26 @@ button:hover {
     border-color: #999;
 }
 
+.secondary-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 8px 15px;
+    background: #f0eee9;
+    color: #666;
+    border: 1px solid #e0ddd8;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.secondary-btn:hover {
+    background: #e0ddd8;
+    color: #333;
+}
+
 .spacer {
     width: 60px; /* Balance the back button on the left */
 }
