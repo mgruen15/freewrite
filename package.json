@@ -1,15 +1,43 @@
 {
   "name": "freewrite",
+  "productName": "Freewrite",
   "version": "1.0.0",
   "description": "A distraction-free writing environment that removes the crutch of editing.",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
-  "keywords": [],
-  "author": "",
+  "build": {
+    "appId": "com.marcgruen.freewrite",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "files": [
+      "**/*",
+      "!history.json"
+    ]
+  },
+  "keywords": [
+    "writing",
+    "productivity",
+    "minimalism"
+  ],
+  "author": "Marc Gruen",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^31.0.0"
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
   }
 }

@@ -21,27 +21,26 @@ function createWindow() {
   // mainWindow.webContents.openDevTools();
 }
 
-ipcMain.handle('save-session', async (event, sessionData) => {
+// Get standard user data path for history
+const getHistoryPath = () => {
   const userDataPath = app.getPath('userData');
-  const userHistoryPath = path.join(userDataPath, 'history.json');
-  const repoHistoryPath = path.join(__dirname, 'history.json');
-  
-  const saveToPath = (historyPath) => {
-    let history = [];
-    if (fs.existsSync(historyPath)) {
-      try {
-        const data = fs.readFileSync(historyPath, 'utf8');
-        history = JSON.parse(data);
-      } catch (e) {
-        console.error(`Failed to parse ${historyPath}`, e);
-      }
-    }
-    history.push(sessionData);
-    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
-  };
+  return path.join(userDataPath, 'history.json');
+};
 
-  saveToPath(userHistoryPath);
-  saveToPath(repoHistoryPath);
+ipcMain.handle('save-session', async (event, sessionData) => {
+  const historyPath = getHistoryPath();
+  
+  let history = [];
+  if (fs.existsSync(historyPath)) {
+    try {
+      const data = fs.readFileSync(historyPath, 'utf8');
+      history = JSON.parse(data);
+    } catch (e) {
+      console.error(`Failed to parse ${historyPath}`, e);
+    }
+  }
+  history.push(sessionData);
+  fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
   
   return { success: true };
 });
@@ -77,10 +76,10 @@ ipcMain.handle('check-recovery', async () => {
 });
 
 ipcMain.handle('get-history', async () => {
-  const repoHistoryPath = path.join(__dirname, 'history.json');
-  if (fs.existsSync(repoHistoryPath)) {
+  const historyPath = getHistoryPath();
+  if (fs.existsSync(historyPath)) {
     try {
-      const data = fs.readFileSync(repoHistoryPath, 'utf8');
+      const data = fs.readFileSync(historyPath, 'utf8');
       return JSON.parse(data);
     } catch (e) {
       console.error('Failed to read history.json', e);
@@ -91,12 +90,12 @@ ipcMain.handle('get-history', async () => {
 });
 
 ipcMain.handle('export-history', async (event) => {
-  const repoHistoryPath = path.join(__dirname, 'history.json');
+  const historyPath = getHistoryPath();
   let history = [];
   
-  if (fs.existsSync(repoHistoryPath)) {
+  if (fs.existsSync(historyPath)) {
     try {
-      const data = fs.readFileSync(repoHistoryPath, 'utf8');
+      const data = fs.readFileSync(historyPath, 'utf8');
       history = JSON.parse(data);
     } catch (e) {
       console.error('Failed to read history.json', e);
@@ -108,7 +107,6 @@ ipcMain.handle('export-history', async (event) => {
     return { success: false, error: 'No history to export' };
   }
 
-  // Sort by timestamp descending
   history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   const { filePath } = await dialog.showSaveDialog({
@@ -127,7 +125,6 @@ ipcMain.handle('export-history', async (event) => {
 
   try {
     if (isPDF) {
-      // Generate HTML for PDF
       let htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -158,7 +155,6 @@ ipcMain.handle('export-history', async (event) => {
             <div class="meta">
               Word Count: ${session.word_count} | 
               Duration: ${session.duration_minutes.actual}m (planned: ${session.duration_minutes.planned}m)
-              ${session.tags && session.tags.length > 0 ? `<br>Tags: ${session.tags.join(', ')}` : ''}
             </div>
             ${session.summary ? `<h3>Summary</h3><p>${session.summary}</p>` : ''}
             <h3>Body</h3>
@@ -170,7 +166,6 @@ ipcMain.handle('export-history', async (event) => {
 
       htmlContent += '</body></html>';
 
-      // Create a hidden window to render the PDF
       const workerWindow = new BrowserWindow({
         show: false,
         webPreferences: { nodeIntegration: false }
@@ -185,7 +180,6 @@ ipcMain.handle('export-history', async (event) => {
       fs.writeFileSync(filePath, data);
       workerWindow.close();
     } else {
-      // Format as Markdown/Text
       let content = '# Freewrite History Export\n\n';
       content += `Generated on: ${new Date().toLocaleString()}\n`;
       content += `Total sessions: ${history.length}\n\n`;
@@ -196,15 +190,6 @@ ipcMain.handle('export-history', async (event) => {
         content += `## Session: ${date}\n\n`;
         content += `- **Word Count:** ${session.word_count}\n`;
         content += `- **Duration:** ${session.duration_minutes.actual}m (planned: ${session.duration_minutes.planned}m)\n`;
-        
-        if (session.tags && session.tags.length > 0) {
-          content += `- **Tags:** ${session.tags.join(', ')}\n`;
-        }
-        
-        if (session.summary) {
-          content += `\n### Summary\n${session.summary}\n`;
-        }
-
         content += `\n### Body\n\n${session.body}\n\n`;
         content += '---\n\n';
       });
