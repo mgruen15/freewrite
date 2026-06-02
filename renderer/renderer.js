@@ -56,6 +56,7 @@ class SessionManager {
         this.detailBackBtn = document.getElementById('detail-back-btn');
         
         this.historyList = document.getElementById('history-list');
+        this.historySearch = document.getElementById('history-search');
         this.detailDate = document.getElementById('detail-date');
         this.detailStats = document.getElementById('detail-stats');
         this.detailBody = document.getElementById('detail-body');
@@ -69,6 +70,7 @@ class SessionManager {
 
         this.timer = null;
         this.sessionData = null;
+        this.allHistory = [];
 
         this.initEventListeners();
     }
@@ -84,6 +86,9 @@ class SessionManager {
             this.detailScreen.classList.add('hidden');
             this.libraryScreen.classList.remove('hidden');
         });
+
+        // Search
+        this.historySearch.addEventListener('input', (e) => this.handleSearch(e.target.value));
 
         // Session Actions
         this.startBtn.addEventListener('click', () => this.startSession());
@@ -105,16 +110,34 @@ class SessionManager {
     async showLibrary() {
         this.setupScreen.classList.add('hidden');
         this.libraryScreen.classList.remove('hidden');
+        this.historySearch.value = '';
         
-        const history = await window.electronAPI.getHistory();
-        this.renderHistory(history);
+        this.allHistory = await window.electronAPI.getHistory();
+        this.renderHistory(this.allHistory);
     }
 
-    renderHistory(history) {
+    handleSearch(query) {
+        const lowerQuery = query.toLowerCase().trim();
+        if (!lowerQuery) {
+            this.renderHistory(this.allHistory);
+            return;
+        }
+
+        const filtered = this.allHistory.filter(session => 
+            session.body.toLowerCase().includes(lowerQuery) ||
+            (session.summary && session.summary.toLowerCase().includes(lowerQuery)) ||
+            (session.tags && session.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
+        );
+        
+        this.renderHistory(filtered, true);
+    }
+
+    renderHistory(history, isSearch = false) {
         this.historyList.innerHTML = '';
         
-        if (history.length === 0) {
-            this.historyList.innerHTML = '<p style="text-align: center; color: #999; margin-top: 40px;">No sessions yet.</p>';
+        if (!history || history.length === 0) {
+            const message = isSearch ? 'No matches found.' : 'No sessions yet.';
+            this.historyList.innerHTML = `<p style="text-align: center; color: #999; margin-top: 40px;">${message}</p>`;
             return;
         }
 

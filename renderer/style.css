@@ -131,6 +131,28 @@ button:hover {
     border-radius: 4px;
 }
 
+.search-container {
+    flex: 1;
+    max-width: 300px;
+    margin-left: 40px;
+}
+
+#history-search {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e0ddd8;
+    background: #fff;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    color: #333;
+    box-sizing: border-box;
+}
+
+#history-search:focus {
+    outline: none;
+    border-color: #999;
+}
+
 .spacer {
     width: 60px; /* Balance the back button on the left */
 }
