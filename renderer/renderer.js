@@ -72,8 +72,10 @@ class SessionManager {
         this.timer = null;
         this.sessionData = null;
         this.allHistory = [];
+        this.autoSaveInterval = null;
 
         this.initEventListeners();
+        this.checkRecovery();
     }
 
     initEventListeners() {
@@ -109,6 +111,53 @@ class SessionManager {
                 this.handleBlockedInput();
             }
         });
+    }
+
+    async checkRecovery() {
+        const recoveredSession = await window.electronAPI.checkRecovery();
+        if (recoveredSession && recoveredSession.body) {
+            if (confirm('It looks like the app closed unexpectedly. Would you like to recover your last session?')) {
+                this.setupScreen.classList.add('hidden');
+                this.writingScreen.classList.remove('hidden');
+                this.canvas.value = recoveredSession.body;
+                
+                this.sessionData = {
+                    duration: recoveredSession.duration || 10,
+                    startTime: new Date()
+                };
+
+                // Restart timer with remaining time if possible, or just default
+                this.timer = new Timer(
+                    this.sessionData.duration,
+                    (seconds) => this.updateTimerUI(seconds),
+                    () => this.endSession()
+                );
+                this.timer.start();
+                this.startAutoSave();
+            } else {
+                await window.electronAPI.clearTemp();
+            }
+        }
+    }
+
+    startAutoSave() {
+        this.stopAutoSave();
+        this.autoSaveInterval = setInterval(async () => {
+            if (this.sessionData && this.canvas.value.trim()) {
+                await window.electronAPI.autoSave({
+                    body: this.canvas.value,
+                    duration: this.sessionData.duration,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }, 30000); // 30 seconds
+    }
+
+    stopAutoSave() {
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = null;
+        }
     }
 
     async handleExport() {
@@ -226,6 +275,7 @@ class SessionManager {
         );
         this.updateTimerUI(duration * 60);
         this.timer.start();
+        this.startAutoSave();
     }
 
     updateTimerUI(seconds) {
@@ -256,6 +306,7 @@ class SessionManager {
     }
 
     async endSession() {
+        this.stopAutoSave();
         const elapsedSeconds = this.timer.getElapsedSeconds();
         this.timer.stop();
         
@@ -264,6 +315,7 @@ class SessionManager {
 
         // Don't save empty sessions
         if (wordCount === 0) {
+            await window.electronAPI.clearTemp();
             this.resetToSetup();
             return;
         }
@@ -290,6 +342,7 @@ class SessionManager {
         // Save to local storage
         try {
             await window.electronAPI.saveSession(sessionRecord);
+            await window.electronAPI.clearTemp();
             console.log('Session saved successfully');
         } catch (error) {
             console.error('Failed to save session:', error);
@@ -309,6 +362,7 @@ class SessionManager {
     }
 
     resetToSetup() {
+        this.stopAutoSave();
         if (this.timer) this.timer.stop();
         this.writingScreen.classList.add('hidden');
         this.endScreen.classList.add('hidden');

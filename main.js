@@ -46,6 +46,36 @@ ipcMain.handle('save-session', async (event, sessionData) => {
   return { success: true };
 });
 
+ipcMain.handle('auto-save-session', async (event, sessionData) => {
+  const userDataPath = app.getPath('userData');
+  const tempPath = path.join(userDataPath, 'temp_session.json');
+  fs.writeFileSync(tempPath, JSON.stringify(sessionData));
+  return { success: true };
+});
+
+ipcMain.handle('clear-temp-session', async () => {
+  const userDataPath = app.getPath('userData');
+  const tempPath = path.join(userDataPath, 'temp_session.json');
+  if (fs.existsSync(tempPath)) {
+    fs.unlinkSync(tempPath);
+  }
+  return { success: true };
+});
+
+ipcMain.handle('check-recovery', async () => {
+  const userDataPath = app.getPath('userData');
+  const tempPath = path.join(userDataPath, 'temp_session.json');
+  if (fs.existsSync(tempPath)) {
+    try {
+      const data = fs.readFileSync(tempPath, 'utf8');
+      return JSON.parse(data);
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+});
+
 ipcMain.handle('get-history', async () => {
   const repoHistoryPath = path.join(__dirname, 'history.json');
   if (fs.existsSync(repoHistoryPath)) {
