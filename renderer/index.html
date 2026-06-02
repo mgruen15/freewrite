@@ -15,10 +15,6 @@
                 <input type="number" id="timer-input" min="2" max="60" value="10">
             </div>
             <div class="input-group">
-                <label for="prompt-input">Optional Prompt</label>
-                <input type="text" id="prompt-input" placeholder="What's on your mind?">
-            </div>
-            <div class="input-group">
                 <label for="tags-input">Tags (comma separated)</label>
                 <input type="text" id="tags-input" placeholder="morning, work, personal">
             </div>
@@ -29,10 +25,10 @@
     <!-- Writing Mode -->
     <div id="writing-screen" class="screen hidden">
         <div id="canvas-container">
-            <div id="active-prompt" class="hidden"></div>
             <textarea id="paper-canvas" placeholder="Type forward — always forward..."></textarea>
         </div>
         <div id="timer-display" class="unobtrusive">10:00</div>
+        <button id="abort-btn" class="unobtrusive">Abort</button>
     </div>
 
     <!-- End Screen -->

@@ -31,6 +31,10 @@ class Timer {
         const seconds = this.remainingSeconds % 60;
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
+
+    getElapsedSeconds() {
+        return this.durationSeconds - this.remainingSeconds;
+    }
 }
 
 class SessionManager {
@@ -40,13 +44,12 @@ class SessionManager {
         this.endScreen = document.getElementById('end-screen');
         
         this.timerInput = document.getElementById('timer-input');
-        this.promptInput = document.getElementById('prompt-input');
         this.tagsInput = document.getElementById('tags-input');
         this.startBtn = document.getElementById('start-btn');
+        this.abortBtn = document.getElementById('abort-btn');
         
         this.canvas = document.getElementById('paper-canvas');
         this.timerDisplay = document.getElementById('timer-display');
-        this.activePrompt = document.getElementById('active-prompt');
         
         this.summaryTime = document.getElementById('summary-time');
         this.summaryWords = document.getElementById('summary-words');
@@ -60,6 +63,7 @@ class SessionManager {
 
     initEventListeners() {
         this.startBtn.addEventListener('click', () => this.startSession());
+        this.abortBtn.addEventListener('click', () => this.handleAbort());
         this.closeBtn.addEventListener('click', () => this.resetToSetup());
 
         // No-Backspace Logic
@@ -74,14 +78,18 @@ class SessionManager {
         });
     }
 
+    handleAbort() {
+        if (confirm('Finish session early? Your writing will be preserved.')) {
+            this.endSession();
+        }
+    }
+
     startSession() {
         const duration = parseInt(this.timerInput.value) || 10;
-        const prompt = this.promptInput.value;
         const tags = this.tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
 
         this.sessionData = {
             duration,
-            prompt,
             tags,
             startTime: new Date()
         };
@@ -90,13 +98,6 @@ class SessionManager {
         this.setupScreen.classList.add('hidden');
         this.writingScreen.classList.remove('hidden');
         
-        if (prompt) {
-            this.activePrompt.textContent = prompt;
-            this.activePrompt.classList.remove('hidden');
-        } else {
-            this.activePrompt.classList.add('hidden');
-        }
-
         this.canvas.value = '';
         this.canvas.focus();
 
@@ -131,16 +132,25 @@ class SessionManager {
     }
 
     endSession() {
+        const elapsedSeconds = this.timer.getElapsedSeconds();
         this.timer.stop();
         this.writingScreen.classList.add('hidden');
         this.endScreen.classList.remove('hidden');
 
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        const timeStr = minutes > 0 
+            ? `${minutes}m ${seconds}s` 
+            : `${seconds} seconds`;
+
         const wordCount = this.canvas.value.trim().split(/\s+/).filter(w => w).length;
-        this.summaryTime.textContent = `${this.sessionData.duration} minutes`;
+        this.summaryTime.textContent = timeStr;
         this.summaryWords.textContent = `${wordCount} words`;
     }
 
     resetToSetup() {
+        if (this.timer) this.timer.stop();
+        this.writingScreen.classList.add('hidden');
         this.endScreen.classList.add('hidden');
         this.setupScreen.classList.remove('hidden');
         this.sessionData = null;
