@@ -43,6 +43,7 @@ class SessionManager {
         this.writingScreen = document.getElementById('writing-screen');
         this.endScreen = document.getElementById('end-screen');
         this.libraryScreen = document.getElementById('library-screen');
+        this.statsScreen = document.getElementById('stats-screen');
         this.detailScreen = document.getElementById('detail-screen');
         
         this.sessionConfig = document.getElementById('session-config');
@@ -50,14 +51,17 @@ class SessionManager {
         this.timerInput = document.getElementById('timer-input');
         
         this.libraryBtn = document.getElementById('library-btn');
+        this.statsBtn = document.getElementById('stats-btn');
         this.startBtn = document.getElementById('start-btn');
         this.abortBtn = document.getElementById('abort-btn');
         this.libraryBackBtn = document.getElementById('library-back-btn');
+        this.statsBackBtn = document.getElementById('stats-back-btn');
         this.detailBackBtn = document.getElementById('detail-back-btn');
         this.exportBtn = document.getElementById('export-btn');
         
         this.historyList = document.getElementById('history-list');
         this.historySearch = document.getElementById('history-search');
+        this.statsGrid = document.getElementById('stats-grid');
         this.detailDate = document.getElementById('detail-date');
         this.detailStats = document.getElementById('detail-stats');
         this.detailBody = document.getElementById('detail-body');
@@ -81,8 +85,14 @@ class SessionManager {
     initEventListeners() {
         // Navigation
         this.libraryBtn.addEventListener('click', () => this.showLibrary());
+        this.statsBtn.addEventListener('click', () => this.showStats());
+        
         this.libraryBackBtn.addEventListener('click', () => {
             this.libraryScreen.classList.add('hidden');
+            this.setupScreen.classList.remove('hidden');
+        });
+        this.statsBackBtn.addEventListener('click', () => {
+            this.statsScreen.classList.add('hidden');
             this.setupScreen.classList.remove('hidden');
         });
         this.detailBackBtn.addEventListener('click', () => {
@@ -126,7 +136,6 @@ class SessionManager {
                     startTime: new Date()
                 };
 
-                // Restart timer with remaining time if possible, or just default
                 this.timer = new Timer(
                     this.sessionData.duration,
                     (seconds) => this.updateTimerUI(seconds),
@@ -150,7 +159,7 @@ class SessionManager {
                     timestamp: new Date().toISOString()
                 });
             }
-        }, 30000); // 30 seconds
+        }, 30000);
     }
 
     stopAutoSave() {
@@ -181,6 +190,95 @@ class SessionManager {
         this.renderHistory(this.allHistory);
     }
 
+    async showStats() {
+        this.setupScreen.classList.add('hidden');
+        this.statsScreen.classList.remove('hidden');
+        
+        const history = await window.electronAPI.getHistory();
+        const stats = this.calculateStats(history);
+        this.renderStats(stats);
+    }
+
+    calculateStats(history) {
+        if (!history || history.length === 0) return null;
+
+        const totalWords = history.reduce((sum, s) => sum + (s.word_count || 0), 0);
+        const totalMinutes = history.reduce((sum, s) => sum + (s.duration_minutes.actual || 0), 0);
+        const avgWords = Math.round(totalWords / history.length);
+        const avgTime = (totalMinutes / history.length).toFixed(1);
+        const longestSession = Math.max(...history.map(s => s.word_count || 0));
+        
+        // Words per minute (velocity)
+        const wordsPerMinute = totalMinutes > 0 ? (totalWords / totalMinutes).toFixed(1) : 0;
+
+        // Calculate Streak
+        const dates = history
+            .map(s => new Date(s.timestamp).toDateString())
+            .filter((v, i, a) => a.indexOf(v) === i)
+            .map(d => new Date(d))
+            .sort((a, b) => b - a);
+
+        let streak = 0;
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let lastDate = dates[0];
+        if (lastDate) {
+            const diff = Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+            if (diff <= 1) {
+                streak = 1;
+                for (let i = 1; i < dates.length; i++) {
+                    const dayDiff = Math.floor((dates[i-1] - dates[i]) / (1000 * 60 * 60 * 24));
+                    if (dayDiff === 1) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return {
+            totalWords,
+            totalSessions: history.length,
+            avgWords,
+            totalMinutes: Math.round(totalMinutes),
+            avgTime,
+            longestSession,
+            streak,
+            wpm: wordsPerMinute
+        };
+    }
+
+    renderStats(stats) {
+        this.statsGrid.innerHTML = '';
+        
+        if (!stats) {
+            this.statsGrid.innerHTML = '<p style="text-align: center; color: #999; grid-column: 1/-1; margin-top: 40px;">Write your first session to see statistics.</p>';
+            return;
+        }
+
+        const items = [
+            { label: 'Current Streak', value: `${stats.streak} Days`, highlight: true },
+            { label: 'Total Words Written', value: stats.totalWords.toLocaleString() },
+            { label: 'Writing Time', value: `${stats.totalMinutes} Min` },
+            { label: 'Daily Average', value: `${stats.avgWords} Words` },
+            { label: 'Writing Velocity', value: `${stats.wpm} WPM` },
+            { label: 'Sessions Completed', value: stats.totalSessions },
+            { label: 'Longest Sprint', value: `${stats.longestSession} Words` }
+        ];
+
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = `stat-card ${item.highlight ? 'highlight' : ''}`;
+            card.innerHTML = `
+                <span class="stat-value">${item.value}</span>
+                <span class="stat-label">${item.label}</span>
+            `;
+            this.statsGrid.appendChild(card);
+        });
+    }
+
     handleSearch(query) {
         const lowerQuery = query.toLowerCase().trim();
         if (!lowerQuery) {
@@ -206,7 +304,6 @@ class SessionManager {
             return;
         }
 
-        // Sort by timestamp descending
         history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
         history.forEach(session => {
@@ -260,14 +357,12 @@ class SessionManager {
             startTime: new Date()
         };
 
-        // UI Transition
         this.setupScreen.classList.add('hidden');
         this.writingScreen.classList.remove('hidden');
         
         this.canvas.value = '';
         this.canvas.focus();
 
-        // Timer Setup
         this.timer = new Timer(
             duration,
             (seconds) => this.updateTimerUI(seconds),
@@ -280,8 +375,6 @@ class SessionManager {
 
     updateTimerUI(seconds) {
         this.timerDisplay.textContent = this.timer.getFormattedTime();
-        
-        // Wind-down phase (last 60 seconds)
         if (seconds <= 60) {
             this.timerDisplay.classList.add('pulse');
         } else {
@@ -290,12 +383,8 @@ class SessionManager {
     }
 
     handleBlockedInput() {
-        // Soft visual/audio feedback
         this.canvas.classList.add('input-blocked');
         setTimeout(() => this.canvas.classList.remove('input-blocked'), 100);
-        
-        // In a real Electron app, we could use shell.beep() or a custom sound
-        // For now, we'll stick to the CSS feedback
     }
 
     generateUUID() {
@@ -313,14 +402,12 @@ class SessionManager {
         const body = this.canvas.value;
         const wordCount = body.trim().split(/\s+/).filter(w => w).length;
 
-        // Don't save empty sessions
         if (wordCount === 0) {
             await window.electronAPI.clearTemp();
             this.resetToSetup();
             return;
         }
 
-        // Create structured session record
         const sessionRecord = {
             id: this.generateUUID(),
             timestamp: new Date().toISOString(),
@@ -331,7 +418,6 @@ class SessionManager {
             word_count: wordCount,
             tags: [],
             body: body,
-            // AI fields initialized as null/empty
             themes: [],
             emotion_signal: null,
             summary: null,
@@ -339,7 +425,6 @@ class SessionManager {
             entities: { people: [], projects: [], places: [] }
         };
 
-        // Save to local storage
         try {
             await window.electronAPI.saveSession(sessionRecord);
             await window.electronAPI.clearTemp();
@@ -371,7 +456,6 @@ class SessionManager {
     }
 }
 
-// Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
     new SessionManager();
 });

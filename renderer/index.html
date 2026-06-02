@@ -8,9 +8,14 @@
 <body>
     <!-- Setup Screen -->
     <div id="setup-screen" class="screen">
-        <button id="library-btn" class="icon-btn" title="Library">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-        </button>
+        <div class="top-nav">
+            <button id="stats-btn" class="icon-btn-inline" title="Statistics">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            </button>
+            <button id="library-btn" class="icon-btn-inline" title="Library">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </button>
+        </div>
         <div class="setup-content">
             <h1>Freewrite</h1>
             <div id="session-config">
@@ -42,6 +47,23 @@
             </header>
             <div id="history-list">
                 <!-- Session items will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Screen -->
+    <div id="stats-screen" class="screen hidden">
+        <div class="library-content">
+            <header>
+                <button id="stats-back-btn" class="nav-back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    Back
+                </button>
+                <h2>Statistics</h2>
+                <div class="spacer"></div>
+            </header>
+            <div id="stats-grid">
+                <!-- Stats cards will be injected here -->
             </div>
         </div>
     </div>
