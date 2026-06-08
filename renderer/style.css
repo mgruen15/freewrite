@@ -383,7 +383,7 @@ h2 {
     font-family: 'Georgia', 'Times New Roman', serif;
     font-size: 20px;
     line-height: 2.0;
-    padding: 40px;
+    padding: 40px 40px 50vh 40px;
     resize: none;
     color: #333;
     box-sizing: border-box;

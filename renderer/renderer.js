@@ -136,6 +136,25 @@ class SessionManager {
                 this.backspaceCount = 0;
             }
         });
+
+        // Typewriter Scrolling
+        this.canvas.addEventListener('input', () => this.centerCursor());
+        window.addEventListener('resize', () => this.centerCursor());
+    }
+
+    centerCursor() {
+        if (!this.writingScreen.classList.contains('hidden')) {
+            const clientHeight = this.canvas.clientHeight;
+            const scrollHeight = this.canvas.scrollHeight;
+            
+            // We want the bottom of the content (where typing happens) 
+            // to be at roughly the middle of the screen.
+            const targetScrollTop = scrollHeight - (clientHeight / 2);
+            
+            if (targetScrollTop > 0) {
+                this.canvas.scrollTop = targetScrollTop;
+            }
+        }
     }
 
     async checkRecovery() {
@@ -159,6 +178,7 @@ class SessionManager {
                 );
                 this.timer.start();
                 this.startAutoSave();
+                this.centerCursor();
             } else {
                 await window.electronAPI.clearTemp();
             }
@@ -388,6 +408,7 @@ class SessionManager {
         this.updateTimerUI(duration * 60);
         this.timer.start();
         this.startAutoSave();
+        this.centerCursor();
     }
 
     updateTimerUI(seconds) {
