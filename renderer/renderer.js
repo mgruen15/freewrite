@@ -77,6 +77,7 @@ class SessionManager {
         this.sessionData = null;
         this.allHistory = [];
         this.autoSaveInterval = null;
+        this.backspaceCount = 0;
 
         this.initEventListeners();
         this.checkRecovery();
@@ -111,14 +112,28 @@ class SessionManager {
         this.abortBtn.addEventListener('click', () => this.handleAbort());
         this.closeBtn.addEventListener('click', () => this.resetToSetup());
 
-        // No-Backspace Logic
+        // No-Backspace Logic (with 3-strike allowance)
         this.canvas.addEventListener('keydown', (e) => {
-            const blockedKeys = ['Backspace', 'Delete'];
             const isUndo = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z';
 
-            if (blockedKeys.includes(e.key) || isUndo) {
+            if (e.key === 'Backspace') {
+                this.backspaceCount++;
+                if (this.backspaceCount > 3) {
+                    e.preventDefault();
+                    this.handleBlockedInput();
+                }
+                return;
+            }
+
+            if (e.key === 'Delete' || isUndo) {
                 e.preventDefault();
                 this.handleBlockedInput();
+                return;
+            }
+
+            // Reset count if it's a character or space
+            if (e.key.length === 1 || e.key === 'Enter') {
+                this.backspaceCount = 0;
             }
         });
     }
@@ -130,6 +145,7 @@ class SessionManager {
                 this.setupScreen.classList.add('hidden');
                 this.writingScreen.classList.remove('hidden');
                 this.canvas.value = recoveredSession.body;
+                this.backspaceCount = 0;
                 
                 this.sessionData = {
                     duration: recoveredSession.duration || 10,
@@ -362,6 +378,7 @@ class SessionManager {
         
         this.canvas.value = '';
         this.canvas.focus();
+        this.backspaceCount = 0;
 
         this.timer = new Timer(
             duration,
