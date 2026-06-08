@@ -27,6 +27,18 @@ const getHistoryPath = () => {
   return path.join(userDataPath, 'history.json');
 };
 
+ipcMain.handle('show-confirm-dialog', async (event, options) => {
+  const result = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
+    type: 'question',
+    buttons: ['Cancel', 'Yes'],
+    defaultId: 1,
+    title: options.title || 'Confirm',
+    message: options.message || 'Are you sure?',
+    detail: options.detail || ''
+  });
+  return result.response === 1;
+});
+
 ipcMain.handle('save-session', async (event, sessionData) => {
   const historyPath = getHistoryPath();
   

@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportHistory: () => ipcRenderer.invoke('export-history'),
   autoSave: (sessionData) => ipcRenderer.invoke('auto-save-session', sessionData),
   clearTemp: () => ipcRenderer.invoke('clear-temp-session'),
-  checkRecovery: () => ipcRenderer.invoke('check-recovery')
+  checkRecovery: () => ipcRenderer.invoke('check-recovery'),
+  showConfirmDialog: (options) => ipcRenderer.invoke('show-confirm-dialog', options)
 });

@@ -160,7 +160,13 @@ class SessionManager {
     async checkRecovery() {
         const recoveredSession = await window.electronAPI.checkRecovery();
         if (recoveredSession && recoveredSession.body) {
-            if (confirm('It looks like the app closed unexpectedly. Would you like to recover your last session?')) {
+            const confirmed = await window.electronAPI.showConfirmDialog({
+                title: 'Recover Session',
+                message: 'It looks like the app closed unexpectedly.',
+                detail: 'Would you like to recover your last session?'
+            });
+
+            if (confirmed) {
                 this.setupScreen.classList.add('hidden');
                 this.writingScreen.classList.remove('hidden');
                 this.canvas.value = recoveredSession.body;
@@ -374,13 +380,20 @@ class SessionManager {
         this.detailBody.textContent = session.body;
     }
 
-    handleAbort() {
+    async handleAbort() {
         const wordCount = this.canvas.value.trim().split(/\s+/).filter(w => w).length;
-        const message = wordCount > 0 
-            ? 'Finish session early? Your writing will be preserved.' 
-            : 'Abort session? Nothing has been written yet.';
+        const message = 'Do you really want to abort the session?';
+        const detail = wordCount > 0 
+            ? 'Your writing will be preserved if you finish now.' 
+            : 'Nothing has been written yet.';
             
-        if (confirm(message)) {
+        const confirmed = await window.electronAPI.showConfirmDialog({
+            title: 'Abort Session',
+            message: message,
+            detail: detail
+        });
+
+        if (confirmed) {
             this.endSession();
         }
     }
